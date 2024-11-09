@@ -1,5 +1,6 @@
 from telegram.ext import Application, CommandHandler, ContextTypes
 from telegram import Update
+from dotenv import load_dotenv
 import json
 import os
 import requests
@@ -9,8 +10,9 @@ import time
 # Constants
 SUBSCRIBERS_FILE = 'subscribers.json'
 MEMECOIN_CONTRACT = "0x1a46467a9246f45c8c340f1f155266a26a71c07bd55d36e8d1c7d0d438a2dbc"
-BOT_TOKEN = "*******"
-API_URL = "https://starknet-mainnet.blastapi.io/[YOUR_API_KEY]"
+load_dotenv()
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+API_URL = os.getenv('API_URL')
 HEADERS = {"Content-Type": "application/json"}
 
 # Utility Functions
@@ -59,6 +61,8 @@ async def check_block_for_memecoins(url, headers, block_hash, telegram_bot):
                             for event in receipt['events']:
                                 if event['from_address'] == MEMECOIN_CONTRACT:
                                     if 'data' in event and len(event['data']) >= 6:
+                                        token_name = event['data'][1]
+                                        token_name = bytes.fromhex(token_name[2:]).decode('utf-8').strip()
                                         deployed_contract = event['data'][-1]
                                         if deployed_contract.startswith('0x'):
                                             deployed_contract = '0x' + deployed_contract[2:].zfill(64)
@@ -67,11 +71,13 @@ async def check_block_for_memecoins(url, headers, block_hash, telegram_bot):
                                         print("\n🚨 New Memecoin Detected! 🚨")
                                         print(f"Block Hash: {block_hash}")
                                         print(f"Transaction Hash: {tx_hash}")
+                                        print(f"Token Name: {token_name}")
                                         print(f"Deployed Contract: {deployed_contract}")
                                         print("-" * 50)
                                         
                                         await telegram_bot.send_memecoin_alert(
                                             block_hash,
+                                            token_name,
                                             tx_hash,
                                             deployed_contract
                                         )
@@ -115,11 +121,12 @@ class TelegramBot:
         else:
             await update.message.reply_text("You are not subscribed!")
 
-    async def send_memecoin_alert(self, block_hash, tx_hash, contract_address):
+    async def send_memecoin_alert(self, block_hash, token_name, tx_hash, contract_address):
         message = (
             "🚨 New Memecoin Detected! 🚨\n\n"
             f"Block Hash: {block_hash}\n"
             f"Transaction Hash: {tx_hash}\n"
+            f"Token Name: {token_name}\n"
             f"Contract Address: {contract_address}\n"
         )
         
