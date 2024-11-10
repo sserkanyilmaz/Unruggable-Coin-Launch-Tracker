@@ -1,5 +1,5 @@
 from telegram.ext import Application, CommandHandler, ContextTypes
-from telegram import Update
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from dotenv import load_dotenv
 import json
 import os
@@ -129,10 +129,18 @@ class TelegramBot:
             f"Token Name: {token_name}\n"
             f"Contract Address: {contract_address}\n"
         )
+
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(text="Dexscreener", url=f"https://dexscreener.com/starknet/{contract_address}"),
+                InlineKeyboardButton(text="Buy on Ekubo", url=f"https://app.ekubo.org/?outputCurrency={contract_address}"),
+                InlineKeyboardButton(text="Buy on Avnu", url=f"https://app.avnu.fi/en?tokenTo={contract_address}&mode=simple&tokenFrom=0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7&amount=0.001")
+            ]
+        ])
         
         for subscriber in self.subscribers:
             try:
-                await self.app.bot.send_message(chat_id=subscriber, text=message)
+                await self.app.bot.send_message(chat_id=subscriber, text=message, reply_markup=keyboard)
             except Exception as e:
                 print(f"Error sending message to {subscriber}: {e}")
 
