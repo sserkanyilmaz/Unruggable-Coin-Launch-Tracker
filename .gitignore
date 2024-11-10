@@ -148,6 +148,8 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
+.tracker.py
+subscribers.json
 
 # Cython debug symbols
 cython_debug/
